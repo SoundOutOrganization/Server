@@ -49,7 +49,7 @@ def show_entries():
     return render_template('simple.html', entries=stream_entries, **general_Data)
 
 #Route to stream music
-@app.route('/<int:stream_id>')
+@app.route('/play/<int:stream_id>')
 def streammp3(stream_id):
     def generate():
         data = return_dict()
