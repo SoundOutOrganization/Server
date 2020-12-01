@@ -25,6 +25,11 @@ def return_dict():
     return dict_here
 
 #Route to render GUI
+
+@app.route('/musics')
+def musics() :
+    return jsonify(return_dict())
+
 @app.route('/')
 def login():
     return render_template('login.html')
