@@ -3,9 +3,9 @@ from flask_login import login_user, logout_user, login_required
 from init import Users
 #from werkzeug.security import generate_password_hash, check_password_hash
 
-# @app.route('/login/<username>/<password>')
 def login_gest(username, password, db):
     test_user = Users.query.filter_by(user=username).first()
+    print ("tesdzdzdzdzdzdzdzdzdzdzdzdzdzdzdzdzdzdzdz")
     if(test_user != None):
         print(test_user.user,"-> [USER EXIST]", flush=True)
         if(test_user.passw != password):
