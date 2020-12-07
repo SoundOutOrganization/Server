@@ -4,36 +4,46 @@ import flask
 from init import *
 from auth import *
 from debug import init_logs_formatting
+from werkzeug.utils import secure_filename
+from werkzeug.datastructures import  FileStorage
 import logging
-# Tornado web server imports
-from tornado.wsgi import WSGIContainer
-from tornado.httpserver import HTTPServer
-from tornado.ioloop import IOLoop
-from flask_sqlalchemy import SQLAlchemy
 import json
-
+import os
 init_logs_formatting()
 app, db= create_app()
+app.config['UPLOAD_PATH'] = 'music'
+#app.config['MAX_CONTENT_PATH']
+app.config['UPLOAD_EXTENSIONS'] = ['.mp3', '.wav']         #if file_ext not in current_app.config['UPLOAD_EXTENSIONS']:abort(400)
 
 #add music to db
 @app.route('/addmusic')
 def template_addmusic():
     return render_template('addmusic.html')
+
 @app.route('/addmusic', methods=['POST'])
 def test_music_db():
     genre = request.form.get('genre')
     title = request.form.get('title')
     author = request.form.get('author')
-    link = request.form.get('link')
-    new_single = Musics(genre=genre, title=title, author=author, link="music/"+ link)
-    db.session.add(new_single)
-    db.session.commit()
+    uploaded_file = request.files['file']
+    filename = secure_filename(uploaded_file.filename)
+    if filename != '':
+        file_ext = os.path.splitext(filename)[1]
+        file_name = os.path.splitext(filename)[0]
+        if file_ext not in app.config['UPLOAD_EXTENSIONS']:
+            print("test")
+        else:
+            new_single = Musics(genre=genre, title=title, author=author, link="music/"+ file_name + file_ext)
+            db.session.add(new_single)
+            db.session.commit()
+            uploaded_file.save(os.path.join(app.config['UPLOAD_PATH'], filename))
+
     return redirect("http://localhost:5000/addmusic", code=302)
 
 def get_musics_dict():
     x = 1
     value = []
-    while(x != Musics.query.count()):
+    while(x <= Musics.query.count()):
         new_single =  Musics.query.get(x)
         print (x)
         value.append({'id': x, 'genre': new_single.genre, 'title': new_single.title, 'author': new_single.author, 'link': new_single.link})
@@ -46,7 +56,7 @@ def get_musics_dict():
 def get_musics_route():
     x = 1
     value = []
-    while(x != Musics.query.count()):
+    while(x <= Musics.query.count()):
         new_single =  Musics.query.get(x)
         print (x)
         value.append({'id': x, 'genre': new_single.genre, 'title': new_single.title, 'author': new_single.author, 'link': new_single.link})
@@ -62,7 +72,7 @@ def handle_login_data():
     username = request.form.get('username')
     password = request.form.get('password')
     x = login_gest(username, password, db)
-    print(x)
+    #print(x)
     if x == "FAILURE":
         return render_template('login.html')
     else :
@@ -85,7 +95,7 @@ def streammp3(stream_id):
                 data = fwav.read(1024)
                 logging.debug('Music data fragment : ' + str(count))
                 count += 1
-                
+
     return Response(generate(), mimetype="audio/mp3")
 
 @app.route('/')
@@ -95,8 +105,5 @@ def main_route():
 #launch a Tornado server with HTTPServer.
 if __name__ == "__main__":
     db.create_all() 
-    port = 5000
-    http_server = HTTPServer(WSGIContainer(app))
     logging.debug("Started Server on port : " + str(port))
-    http_server.listen(port)
-    IOLoop.instance().start()
+    app.run(host='0.0.0.0')
