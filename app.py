@@ -104,6 +104,7 @@ def main_route():
 
 #launch a Tornado server with HTTPServer.
 if __name__ == "__main__":
+    port = 5000
     db.create_all() 
     logging.debug("Started Server on port : " + str(port))
     app.run(host='0.0.0.0')
